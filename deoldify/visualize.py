@@ -15,6 +15,8 @@ from IPython.display import HTML
 from IPython.display import Image as ipythonimage
 import cv2
 import logging
+import subprocess
+
 
 # adapted from https://www.pyimagesearch.com/2016/04/25/watermarking-images-with-opencv-and-python/
 def get_watermarked(pil_image: Image) -> Image:
@@ -69,7 +71,7 @@ class ModelImageVisualizer:
         results_dir:Path = None,
         figsize: Tuple[int, int] = (20, 20),
         render_factor: int = None,
-        
+
         display_render_factor: bool = False,
         compare: bool = False,
         post_process: bool = True,
@@ -233,7 +235,7 @@ class VideoColorizer:
             logging.error('stderr:' + e.stderr.decode('UTF-8'))
             raise e
         except Exception as e:
-            logging.error('Failed to instantiate ffmpeg.probe.  Details: {0}'.format(e), exc_info=True)   
+            logging.error('Failed to instantiate ffmpeg.probe.  Details: {0}'.format(e), exc_info=True)
             raise e
 
     def _get_fps(self, source_path: Path) -> str:
@@ -258,6 +260,7 @@ class VideoColorizer:
             ydl.download([source_url])
 
     def _extract_raw_frames(self, source_path: Path):
+        print("Extracting raw frames from source video.")
         bwframes_folder = self.bwframes_root / (source_path.stem)
         bwframe_path_template = str(bwframes_folder / '%5d.jpg')
         bwframes_folder.mkdir(parents=True, exist_ok=True)
@@ -274,19 +277,22 @@ class VideoColorizer:
 
         try:
             process.run()
+            # print that it was a success
+            print("Raw frames were extracted from source video.")
         except ffmpeg.Error as e:
             logging.error("ffmpeg error: {0}".format(e), exc_info=True)
             logging.error('stdout:' + e.stdout.decode('UTF-8'))
             logging.error('stderr:' + e.stderr.decode('UTF-8'))
             raise e
         except Exception as e:
-            logging.error('Errror while extracting raw frames from source video.  Details: {0}'.format(e), exc_info=True)   
+            logging.error('Errror while extracting raw frames from source video.  Details: {0}'.format(e), exc_info=True)
             raise e
 
     def _colorize_raw_frames(
         self, source_path: Path, render_factor: int = None, post_process: bool = True,
         watermarked: bool = True,
     ):
+        print("Colorizing extracted frames.")
         colorframes_folder = self.colorframes_root / (source_path.stem)
         colorframes_folder.mkdir(parents=True, exist_ok=True)
         self._purge_images(colorframes_folder)
@@ -301,7 +307,10 @@ class VideoColorizer:
                 )
                 color_image.save(str(colorframes_folder / img))
 
+        print("Colorized frames were created.")
+
     def _build_video(self, source_path: Path) -> Path:
+        print("Building video from colorized frames.")
         colorized_path = self.result_folder / (
             source_path.name.replace('.mp4', '_no_audio.mp4')
         )
@@ -313,8 +322,8 @@ class VideoColorizer:
         fps = self._get_fps(source_path)
 
         process = (
-            ffmpeg 
-                .input(str(colorframes_path_template), format='image2', vcodec='mjpeg', framerate=fps) 
+            ffmpeg
+                .input(str(colorframes_path_template), format='image2', vcodec='mjpeg', framerate=fps)
                 .output(str(colorized_path), crf=17, vcodec='libx264')
                 .global_args('-hide_banner')
                 .global_args('-nostats')
@@ -323,13 +332,15 @@ class VideoColorizer:
 
         try:
             process.run()
+            # print that it was a success
+            print("Video was created from colorized frames.")
         except ffmpeg.Error as e:
             logging.error("ffmpeg error: {0}".format(e), exc_info=True)
             logging.error('stdout:' + e.stdout.decode('UTF-8'))
             logging.error('stderr:' + e.stderr.decode('UTF-8'))
             raise e
         except Exception as e:
-            logging.error('Errror while building output video.  Details: {0}'.format(e), exc_info=True)   
+            logging.error('Errror while building output video.  Details: {0}'.format(e), exc_info=True)
             raise e
 
         result_path = self.result_folder / source_path.name
@@ -477,7 +488,7 @@ def show_video_in_notebook(video_path: Path):
     encoded = base64.b64encode(video)
     ipythondisplay.display(
         HTML(
-            data='''<video alt="test" autoplay 
+            data='''<video alt="test" autoplay
                 loop controls style="height: 400px;">
                 <source src="data:video/mp4;base64,{0}" type="video/mp4" />
              </video>'''.format(
