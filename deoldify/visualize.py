@@ -16,6 +16,7 @@ from IPython.display import Image as ipythonimage
 import cv2
 import logging
 import subprocess
+import datetime
 
 
 # adapted from https://www.pyimagesearch.com/2016/04/25/watermarking-images-with-opencv-and-python/
@@ -260,7 +261,9 @@ class VideoColorizer:
             ydl.download([source_url])
 
     def _extract_raw_frames(self, source_path: Path):
-        print("Extracting raw frames from source video.")
+        current_time = datetime.datetime.now()
+        logging.info(f"Extracting raw frames from video - {current_time}")
+
         bwframes_folder = self.bwframes_root / (source_path.stem)
         bwframe_path_template = str(bwframes_folder / '%5d.jpg')
         bwframes_folder.mkdir(parents=True, exist_ok=True)
@@ -278,7 +281,9 @@ class VideoColorizer:
         try:
             process.run()
             # print that it was a success
-            print("Raw frames were extracted from source video.")
+
+            current_time = datetime.datetime.now()
+            logging.info(f"Raw frames were extracted from source video - {current_time}")
         except ffmpeg.Error as e:
             logging.error("ffmpeg error: {0}".format(e), exc_info=True)
             logging.error('stdout:' + e.stdout.decode('UTF-8'))
@@ -292,7 +297,9 @@ class VideoColorizer:
         self, source_path: Path, render_factor: int = None, post_process: bool = True,
         watermarked: bool = True,
     ):
-        print("Colorizing extracted frames.")
+        current_time = datetime.datetime.now()
+        logging.info(f"Colorizing extracted frames - {current_time}")
+
         colorframes_folder = self.colorframes_root / (source_path.stem)
         colorframes_folder.mkdir(parents=True, exist_ok=True)
         self._purge_images(colorframes_folder)
@@ -307,10 +314,14 @@ class VideoColorizer:
                 )
                 color_image.save(str(colorframes_folder / img))
 
-        print("Colorized frames were created.")
+        current_time = datetime.datetime.now()
+        logging.info(f"Colorized frames were created - {current_time}")
 
     def _build_video(self, source_path: Path) -> Path:
-        print("Building video from colorized frames.")
+
+        current_time = datetime.datetime.now()
+        logging.info(f"Building video from colorized frames - {current_time}")
+
         colorized_path = self.result_folder / (
             source_path.name.replace('.mp4', '_no_audio.mp4')
         )
@@ -333,7 +344,9 @@ class VideoColorizer:
         try:
             process.run()
             # print that it was a success
-            print("Video was created from colorized frames.")
+            current_time = datetime.datetime.now()
+            logging.info(f"Video was created from colorized frames - {current_time}")
+
         except ffmpeg.Error as e:
             logging.error("ffmpeg error: {0}".format(e), exc_info=True)
             logging.error('stdout:' + e.stdout.decode('UTF-8'))

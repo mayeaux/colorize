@@ -3,8 +3,15 @@
 
 import argparse
 import warnings
+import logging
+import datetime
+
+
 from deoldify import device
 from deoldify.device_id import DeviceId
+
+current_time = datetime.datetime.now()
+logging.info(f"Booting the CLI - {current_time}")
 
 # Set GPU device first as required
 device.set(device=DeviceId.GPU0)
@@ -18,6 +25,8 @@ warnings.filterwarnings("ignore", category=UserWarning, message=".*?Your .*? set
 # NOTE: For render_factor max is 44 with 11GB video cards.
 # 21 is a good default
 
+# Get the current date and time
+
 # Create a command line argument parser
 parser = argparse.ArgumentParser(description='Colorize black and white videos using DeOldify.')
 
@@ -28,8 +37,16 @@ parser.add_argument('-r', '--render_factor', type=int, default=21, help='Render 
 # Parse the arguments
 args = parser.parse_args()
 
+current_time = datetime.datetime.now()
+logging.info(f"Instantiating the video colorizer - {current_time}")
+
+
 # Initialize the video colorizer
 colorizer = get_video_colorizer()
+
+current_time = datetime.datetime.now()
+logging.info(f"Video colorizer instantiated - {current_time}")
+
 
 # print the file name and render factor
 print("File name:", args.file_name)
